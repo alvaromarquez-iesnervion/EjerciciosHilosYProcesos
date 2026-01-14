@@ -1,5 +1,5 @@
 
-from multiprocessing import Process, Pool, Queue
+from multiprocessing import Process, Queue
 import time
 
 """Realiza el ejercicio anterior pero esta vez va a haber otra función que lea los números de un fichero. 

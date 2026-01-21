@@ -70,7 +70,7 @@ from multiprocessing import Pool
 import os
 
 def main():
-    ruta_medias = "medias.txt"
+    ruta_medias = "./Boletin2/ejercicio3/medias.txt"
 
     # Limpiar fichero de medias si existe
     if os.path.exists(ruta_medias):

@@ -1,4 +1,5 @@
-"""En este ejercicio debes implementar los siguientes procesos y el Main como se explica a continuación:
+"""
+En este ejercicio debes implementar los siguientes procesos y el Main como se explica a continuación:
 
 Proceso 1: Genera 6 números aleatorios entre 1 y 10, ambos inclusive, y los guarda en un fichero. Estos números deben contener decimales. 
 La ruta a este fichero se le indicará como parámetro de entrada. Estos 6 números representan las notas de un alumno.
@@ -22,36 +23,76 @@ Prueba a realizar el ejercicio haciendo uso de Pool y haciendo uso de bucles for
 """
 import random
 
-def funcion_proceso_1(numero_alumno):
-    nombre_fichero = f"Alumno{numero_alumno}.txt"
-    
-    with open(nombre_fichero, "w", encoding="utf-8") as f:
-        for _ in range(6):
-            numero_aleatorio = round(random.uniform(1, 10), 2)
-            f.write(f"{numero_aleatorio}\n")
-    
-    return nombre_fichero
+def generar_notas_alumno(ruta_fichero: str, num_notas: int = 6) -> str:
+    """
+    Genera notas aleatorias con decimales y las guarda en un fichero.
+    """
+    with open(ruta_fichero, "w", encoding="utf-8") as fichero:
+        for _ in range(num_notas):
+            nota = round(random.uniform(1, 10), 2) 
+            fichero.write(f"{nota}\n")
 
-            
+    return ruta_fichero
 
-def funcion_proceso_2(ruta_fichero, nombre_alumno):
-    with open(ruta_fichero, "r", encoding="utf-8") as f:
-        notas = [float(linea.strip()) for linea in f.readlines()]
-        media = sum(notas) / len(notas)
+def calcular_media_alumno(ruta_notas: str, nombre_alumno: str, ruta_medias: str):
+    """
+    Calcula la media de las notas de un alumno y la guarda en el fichero de medias.
+    """
+    with open(ruta_notas, "r", encoding="utf-8") as fichero:
+        notas = [float(linea.strip()) for linea in fichero]
 
-    with open("medias.txt", "a", encoding="utf-8") as f_medias:
-        f_medias.write(f"{media} {nombre_alumno}\n")
+    media = sum(notas) / len(notas)
 
-def funcion_proceso_3():
-    with open("medias.txt", "r", encoding="utf-8") as f:
-        lineas = f.readlines()
-        maxima_nota = float("-inf")
-        alumno_maximo = ""
-        for linea in lineas:
-            partes = linea.strip().split()
-            nota = float(partes[0])
-            nombre_alumno = " ".join(partes[1:])
-            if nota > maxima_nota:
-                maxima_nota = nota
-                alumno_maximo = nombre_alumno
-    print(f"La nota máxima es {maxima_nota} y el alumno que la obtuvo es {alumno_maximo}")
+    with open(ruta_medias, "a", encoding="utf-8") as fichero_medias:
+        fichero_medias.write(f"{media:.2f} {nombre_alumno}\n")  
+
+
+def obtener_mejor_alumno(ruta_medias: str):
+    """
+    Lee el fichero de medias y muestra el alumno con la nota más alta.
+    """
+    nota_maxima = float("-inf")
+    mejor_alumno = ""
+
+    with open(ruta_medias, "r", encoding="utf-8") as fichero:
+        for linea in fichero:
+            nota, nombre = linea.strip().split(maxsplit=1)
+            nota = float(nota)
+
+            if nota > nota_maxima:
+                nota_maxima = nota
+                mejor_alumno = nombre
+
+    print(f"La nota máxima es {nota_maxima:.2f} y la obtuvo {mejor_alumno}")
+
+
+from multiprocessing import Pool
+import os
+
+def main():
+    ruta_medias = "medias.txt"
+
+    # Limpiar fichero de medias si existe
+    if os.path.exists(ruta_medias):
+        os.remove(ruta_medias)
+
+    alumnos = [f"Alumno{i}" for i in range(1, 11)]
+    ficheros_notas = [f"./Boletin2/ejercicio3/{alumno}.txt" for alumno in alumnos]
+
+    # PROCESO 1: generar notas concurrentemente
+    with Pool() as pool:
+        pool.starmap(generar_notas_alumno, [(fichero,) for fichero in ficheros_notas])
+
+    # PROCESO 2: calcular medias concurrentemente
+    with Pool() as pool:
+        pool.starmap(
+            calcular_media_alumno,
+            [(fichero, alumno, ruta_medias) for fichero, alumno in zip(ficheros_notas, alumnos)]
+        )
+
+    # PROCESO 3: solo cuando todo ha terminado
+    obtener_mejor_alumno(ruta_medias)
+
+
+if __name__ == "__main__":
+    main()
